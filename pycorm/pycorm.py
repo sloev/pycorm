@@ -6,7 +6,7 @@ from jsonschema import SchemaError, ValidationError
 from exceptions import PycormSchemaError, PycormValidationError
 
 class Model(dict):
-    schema = None
+    __schema__ = None
 
     __getattr__= dict.__getitem__
 
@@ -23,11 +23,12 @@ class Model(dict):
 
     def validate(self):
         try:
-            jsonschema_validate(self, self.schema)
+            jsonschema_validate(self, self.__schema__)
         except SchemaError as e:
             raise PycormSchemaError(e)
         except ValidationError as e:
             raise PycormValidationError(e)
+
     @classmethod
     def with_validation(cls, d):
         return cls(d, validate_on_construction=True)

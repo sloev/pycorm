@@ -13,7 +13,7 @@ import unittest
 from pycorm.pycorm import Model, PycormValidationError, PycormSchemaError
 
 class ModelTest(Model):
-    schema = {
+   __schema__ = {
             "type": "object",
             "properties": {
                 "foo": {"type": "string"},
