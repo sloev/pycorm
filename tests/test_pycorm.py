@@ -56,12 +56,6 @@ class TestPycorm(unittest.TestCase):
     def test_that_it_raises_pycorm_validation_error(self):
         self.assertRaises(PycormValidationError, ModelTest.with_validation, self.dict_b)
 
-    def test_that_it_raises_pycorm_schema_error(self):
-        class ModelTestB(Model):
-            schema = {"bad":"schema"}
-        b = ModelTestB(self.dict_a)
-        self.assertRaises(PycormSchemaError, ModelTestB.with_validation, self.dict_a)
-
     def test_that_dotnotation_works(self):
         model = ModelTest(self.dict_a)
         self.assertEquals(self.dict_a['bar']['baz'], model.bar.baz)
