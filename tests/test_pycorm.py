@@ -60,8 +60,6 @@ class TestPycorm(unittest.TestCase):
         class ModelTestB(Model):
             schema = {"bad":"schema"}
         b = ModelTestB(self.dict_a)
-        self.assertEquals(1,1)
-        return
         self.assertRaises(PycormSchemaError, ModelTestB.with_validation, self.dict_a)
 
     def test_that_dotnotation_works(self):

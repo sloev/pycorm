@@ -24,9 +24,9 @@ class Model(dict):
     def validate(self):
         try:
             jsonschema_validate(self, self.schema)
-        except SchemaError:
+        except SchemaError as e:
             raise PycormSchemaError(e)
-        except ValidationError,e:
+        except ValidationError as e:
             raise PycormValidationError(e)
     @classmethod
     def with_validation(cls, d):
