@@ -26,7 +26,7 @@ test_requirements = [
 
 setup(
     name='pycorm',
-    version='0.2.1',
+    version='0.2.2',
     description="a pico orm that uses jsonschema",
     long_description=readme + '\n\n' + history,
     author="Johannes Valbjørn",
