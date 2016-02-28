@@ -13,15 +13,16 @@ pycorm
         :alt: Documentation Status
 
 
-a pico orm that uses jsonschema
+Model class with fields that translate to jsonschema fields.
+Classes can be instantiated from dictionaries and will auto populate fields with right type (only Models)
 
-* Free software: ISC license
+* Free software: MIT
 * Documentation: https://pycorm.readthedocs.org.
 
 Features
 --------
 
-* TODO
+Python objects from dictionaries, including dotnotation and jsonschema validation.
 
 Credits
 ---------
