@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #based on http://hayd.github.io/2013/dotable-dictionaries/
-from jsonschema import validate as jsonschema_validate
+from jsonschema.validators import validator_for as jsonschema_validator_for
 
 
 def StringField():
@@ -11,32 +11,17 @@ def NumberField():
 def ModelField(model):
     pass
 __allowed_options__ = ["additionalProperties", "required"]
+
+
 class Model(dict):
     __schema__ = None
+    __schema_validator__ = None
 
     __getattr__= dict.__getitem__
 
-    def __init__(self, value_dict=None, strict=False):
-        if not type(self) is Model and not self.__class__.__schema__:
-            # create kwargs from public class attrs
-            kwargs = [(key, value) for key, value in
-                        self.__class__.__dict__.iteritems() if not callable(
-                    value) and not str(key).startswith("__")]
-            # cache schema class attr and delete kwargs on class
-            self.__class__.__schema__ = {
-                "type": "object",
-                "properties": {key: (delattr(self.__class__,key) or
-                           self.__parse_schema(value))
-                     for key, value in kwargs}
-            }
-            # get extra options
-            options = {key: value for key, value in (
-                (key, getattr(self.__class__, "__%s__" % key, None))
-                for key in __allowed_options__) if value is not None}
 
-            self.__class__.__schema__.update(options)
-            [delattr(self.__class__, "__%s__" % key) for key in
-             __allowed_options__ if hasattr(self.__class__, "__%s__" % key)]
+    def __init__(self, value_dict=None):
+        self.validate_schema()
 
         if value_dict is not None:
             self.update(**dict((k, self.__parse_input(v))
@@ -47,11 +32,35 @@ class Model(dict):
         pass
 
     def validate(self):
-        jsonschema_validate(self, self.__schema__)
+        self.__class__.__schema_validator__.validate(self)
 
     @classmethod
-    def with_validation(cls, value_dict, strict=False):
-        inst = cls(value_dict, strict=strict)
+    def validate_schema(cls):
+        if not cls is Model and not cls.__schema__:
+            # pop options
+            options = {key: value for key, value in (
+                (key, cls.__popattr__(cls, key, None))
+                for key in __allowed_options__) if value is not None}
+
+            # pop kwargs
+            kwargs = {key: cls.__parse_schema(cls.__popattr__(cls, key))
+                    for key, value in cls.__dict__.items()
+                    if not callable(value) and not str(key).startswith("__")}
+
+            # create schema from kwargs and options
+            cls.__schema__ = dict({
+                "type": "object",
+                "properties": kwargs
+                },
+                **options)
+        if not cls is Model and not cls.__schema_validator__:
+            validator_class = jsonschema_validator_for(cls.__schema__)
+            validator_class.check_schema(cls.__schema__)
+            cls.__schema_validator__ = validator_class(cls.__schema__)
+
+    @classmethod
+    def with_validation(cls, value_dict):
+        inst = cls(value_dict)
         inst.validate()
         return inst
 
@@ -74,9 +83,16 @@ class Model(dict):
         else:
             return v
 
+    @staticmethod
+    def __popattr__(inst, key, default=None):
+        val = getattr(inst, key, default)
+        if val is not None:
+            delattr(inst, key)
+        return val
+
 class A(Model):
-    __required__ = ["foo"]
-    __additionalProperties__ = False
+    required = ["foo"]
+    additionalProperties = False
 
     foo = StringField()
 
@@ -94,7 +110,7 @@ class C(Model):
             }
 
 
-b = B.with_validation({"baz":{"foo":"lolcat"}})
+b = B.with_validation({"baz":A({"foo":"lolcat"})})
 #"raises exception - C.with_validation({"foo":10})
 c = C.with_validation({"foo":"lolcat"})
 
