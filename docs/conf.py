@@ -17,7 +17,7 @@ import sys
 import os
 from mock import Mock
 
-MOCK_MODULES = ['jsonschema.validators']
+MOCK_MODULES = ['jsonschema.validators', 'jsonschema']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 
