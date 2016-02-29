@@ -11,7 +11,7 @@ def NumberField():
     return {"type":"number"}
 
 
-__allowed_options__ = ["additionalProperties", "required"]
+__allowed_options__ = {"additionalProperties":False, "required":None}
 
 
 class BaseModel(dict):
@@ -56,7 +56,6 @@ class BaseModel(dict):
 
     __schema__ = None
     __schema_validator__ = None
-    additionalProperties = False
     # Model.an_attribute == Model['an_attribute']
     __getattr__ = dict.__getitem__
 
@@ -76,6 +75,7 @@ class BaseModel(dict):
             self.update(**dict(
                 (key,self.__parse_input(value, _lookup.get(key, None)))
                 for key, value in value_dict.iteritems()))
+        print ""
 
     def validate(self):
         """Validates self.__dict__ against self.__class__.__schema__
@@ -105,11 +105,12 @@ class BaseModel(dict):
         if not cls is BaseModel and not cls.__schema__:
             # pop allowed options
             options = {key: value for key, value in (
-                (key, cls.__popattr__(cls, key, None))
-                for key in __allowed_options__) if value is not None}
+                (key, cls.__popattr__(key, default))
+                for key, default in __allowed_options__.items()) if value is not
+                       None}
 
             # pop public kwargs
-            kwargs = {key: cls.__parse_schema(cls.__popattr__(cls, key))
+            kwargs = {key: cls.__parse_schema(cls.__popattr__(key))
                     for key, value in cls.__dict__.items()
                     if not callable(value) and not str(key).startswith("__")}
 
@@ -122,6 +123,7 @@ class BaseModel(dict):
 
             # avoid endless recursion by fisrt creating dict and then cast it
             cls.__schema__ = cls(cls.__schema__)
+            print ""
 
         if not cls is BaseModel and not cls.__schema_validator__:
             # cache jsonschema validator in Model class
@@ -165,8 +167,8 @@ class BaseModel(dict):
         else:
             return value_dict
 
-    @staticmethod
-    def __popattr__(inst, key, default=None):
+    @classmethod
+    def __popattr__(cls, key, default=None):
         """Pop attr's from an instance
 
         :param inst:
@@ -174,7 +176,8 @@ class BaseModel(dict):
         :param default:
         :return:
         """
-        val = getattr(inst, key, default)
+        val = getattr(cls, key, None)
         if val is not None:
-            delattr(inst, key)
-        return val
+            delattr(cls, key)
+            return val
+        return default

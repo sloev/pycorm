@@ -10,31 +10,19 @@ Tests for `pycorm` module.
 
 import unittest
 
-from pycorm.pycorm import BaseBaseModel, StringField, NumberField
+from pycorm.pycorm import BaseModel, StringField, NumberField
 
 
 class BaseModelA(BaseModel):
-    required = ["bar"]
-    additionalProperties = False
-
     bar = StringField()
 
     def baz(self):
         return "baz"
 
 class BaseModelB(BaseModel):
+    additionalProperties = True
     foo = BaseModelA()
     baz = NumberField()
-
-class BaseModelC(BaseModel):
-    __schema__ = {
-            "type": "object",
-            "properties": {
-                "foo": {"type": "string"}
-            },
-            "required": ["foo"],
-            "additionalProperties": False
-            }
 
 class TestPycorm(unittest.TestCase):
 
@@ -52,6 +40,13 @@ class TestPycorm(unittest.TestCase):
                     "bar": 10
                     }
                 }
+        self.BaseModel_b_dict_3 = {
+            "baz" : 20,
+            "wrong_key":"wrong_value",
+            "foo":{
+                "bar": "bar"
+                }
+            }
 
     def tearDown(self):
         pass
@@ -64,6 +59,10 @@ class TestPycorm(unittest.TestCase):
     def test_that_implicit_inheritance_works(self):
         self.assertEquals("baz", BaseModelB.with_validation(self.BaseModel_b_dict_1).foo.baz())
 
+    def test_that_additional_properties_true_works(self):
+        self.assertEquals(self.BaseModel_b_dict_3['wrong_key'],
+                          BaseModelB.with_validation(
+            self.BaseModel_b_dict_3).wrong_key)
 
 
 if __name__ == '__main__':
