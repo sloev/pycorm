@@ -15,6 +15,11 @@
 
 import sys
 import os
+from mock import Mock
+
+MOCK_MODULES = ['jsonschema.validators']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -32,7 +37,6 @@ project_root = os.path.dirname(cwd)
 sys.path.insert(0, project_root)
 
 import pycorm
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

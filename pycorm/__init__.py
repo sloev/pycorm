@@ -4,4 +4,4 @@ __author__ = 'Johannes Valbjørn'
 __email__ = 'johannes.valbjorn@gmail.com'
 __version__ = '0.2.9'
 
-from pycorm import Model, StringField, NumberField
+from pycorm import BaseModel, StringField, NumberField

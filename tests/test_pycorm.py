@@ -10,10 +10,10 @@ Tests for `pycorm` module.
 
 import unittest
 
-from pycorm.pycorm import Model, StringField, NumberField
+from pycorm.pycorm import BaseBaseModel, StringField, NumberField
 
 
-class ModelA(Model):
+class BaseModelA(BaseModel):
     required = ["bar"]
     additionalProperties = False
 
@@ -22,11 +22,11 @@ class ModelA(Model):
     def baz(self):
         return "baz"
 
-class ModelB(Model):
-    foo = ModelA()
+class BaseModelB(BaseModel):
+    foo = BaseModelA()
     baz = NumberField()
 
-class ModelC(Model):
+class BaseModelC(BaseModel):
     __schema__ = {
             "type": "object",
             "properties": {
@@ -39,14 +39,14 @@ class ModelC(Model):
 class TestPycorm(unittest.TestCase):
 
     def setUp(self):
-        self.model_b_dict_1 = {
+        self.BaseModel_b_dict_1 = {
                 "baz": 20,
                 "foo": {
                     "bar": "bar"
                     }
                 }
 
-        self.model_b_dict_2 = {
+        self.BaseModel_b_dict_2 = {
                 "baz" : "baz",
                 "foo":{
                     "bar": 10
@@ -56,13 +56,13 @@ class TestPycorm(unittest.TestCase):
     def tearDown(self):
         pass
     def test_that_dotnotation_works(self):
-        self.assertEquals(self.model_b_dict_1['foo']['bar'],ModelB.with_validation(self.model_b_dict_1).foo.bar)
-    
+        self.assertEquals(self.BaseModel_b_dict_1['foo']['bar'],BaseModelB.with_validation(self.BaseModel_b_dict_1).foo.bar)
+
     def test_that_wrong_type_raises_exception(self):
-        self.assertRaises(Exception, ModelB.with_validation, self.model_b_dict_2)
+        self.assertRaises(Exception, BaseModelB.with_validation, self.BaseModel_b_dict_2)
 
     def test_that_implicit_inheritance_works(self):
-        self.assertEquals("baz", ModelB.with_validation(self.model_b_dict_1).foo.baz())
+        self.assertEquals("baz", BaseModelB.with_validation(self.BaseModel_b_dict_1).foo.baz())
 
 
 
