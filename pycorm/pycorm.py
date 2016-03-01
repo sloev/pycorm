@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 #based on http://hayd.github.io/2013/dotable-dictionaries/
-from jsonschema.validators import validator_for as jsonschema_validator_for
+import sys
 
+
+from jsonschema.validators import validator_for as jsonschema_validator_for
+from jsonschema import ValidationError
+from . import SchemaValidationError, InheritanceNotSupportedError
 
 def StringField():
     return {"type":"string"}
@@ -68,6 +72,8 @@ class BaseModel(dict):
          :type: _lookup: dict
         :return:
         """
+        if not BaseModel in self.__class__.__bases__:
+            raise InheritanceNotSupportedError()
         self.validate_schema()
         if value_dict is not None:
             if not _lookup:
@@ -82,7 +88,10 @@ class BaseModel(dict):
 
         :return:
         """
-        self.__class__.__schema_validator__.validate(self)
+        try:
+            self.__class__.__schema_validator__.validate(self)
+        except ValidationError, e:
+            raise SchemaValidationError, e, sys.exc_info()[2]
 
     @classmethod
     def with_validation(cls, value_dict):

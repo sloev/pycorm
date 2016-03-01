@@ -10,7 +10,8 @@ Tests for `pycorm` module.
 
 import unittest
 
-from pycorm.pycorm import BaseModel, StringField, NumberField
+from pycorm import BaseModel, StringField, NumberField
+from pycorm import SchemaValidationError, InheritanceNotSupportedError
 
 
 class BaseModelA(BaseModel):
@@ -19,28 +20,47 @@ class BaseModelA(BaseModel):
     def baz(self):
         return "baz"
 
+
 class BaseModelB(BaseModel):
     additionalProperties = True
     foo = BaseModelA()
     baz = NumberField()
 
+
+class BaseModelC(BaseModel):
+    foo = BaseModelA()
+    baz = NumberField()
+
+
+class BaseModelD(BaseModelA):
+    foo = StringField()
+
+class Mixin(object):
+    def baz(self):
+        return "baz"
+
+class BaseModelE(BaseModel, Mixin):
+    foo = StringField()
+    def bar(self):
+        return "bar"
+
 class TestPycorm(unittest.TestCase):
 
     def setUp(self):
-        self.BaseModel_b_dict_1 = {
+        self.valid_dict = {
                 "baz": 20,
                 "foo": {
                     "bar": "bar"
                     }
                 }
 
-        self.BaseModel_b_dict_2 = {
+        self.invalid_dict = {
                 "baz" : "baz",
                 "foo":{
                     "bar": 10
                     }
                 }
-        self.BaseModel_b_dict_3 = {
+        self.additional_properties_dict = {
             "baz" : 20,
             "wrong_key":"wrong_value",
             "foo":{
@@ -48,22 +68,38 @@ class TestPycorm(unittest.TestCase):
                 }
             }
 
+
     def tearDown(self):
         pass
+
     def test_that_dotnotation_works(self):
-        self.assertEquals(self.BaseModel_b_dict_1['foo']['bar'],BaseModelB.with_validation(self.BaseModel_b_dict_1).foo.bar)
+        self.assertEquals(self.valid_dict['foo']['bar'],
+                BaseModelB.with_validation(self.valid_dict).foo.bar)
 
     def test_that_wrong_type_raises_exception(self):
-        self.assertRaises(Exception, BaseModelB.with_validation, self.BaseModel_b_dict_2)
+        self.assertRaises(SchemaValidationError,BaseModelB.with_validation,
+                self.invalid_dict)
 
-    def test_that_implicit_inheritance_works(self):
-        self.assertEquals("baz", BaseModelB.with_validation(self.BaseModel_b_dict_1).foo.baz())
+    def test_that_embedded_model_instantiation_works(self):
+        self.assertEquals(
+                "baz", BaseModelB.with_validation(self.valid_dict).foo.baz())
 
     def test_that_additional_properties_true_works(self):
-        self.assertEquals(self.BaseModel_b_dict_3['wrong_key'],
-                          BaseModelB.with_validation(
-            self.BaseModel_b_dict_3).wrong_key)
+        self.assertEquals(
+                self.additional_properties_dict['wrong_key'],
+                BaseModelB.with_validation(
+                    self.additional_properties_dict).wrong_key)
 
+    def test_that_additional_properties_raise_error(self):
+        self.assertRaises(SchemaValidationError, BaseModelC.with_validation,
+            self.additional_properties_dict)
+
+    def test_that_inheritance_raises_error(self):
+        self.assertRaises(InheritanceNotSupportedError, BaseModelD)
+
+    def test_that_mixins_work(self):
+        self.assertEquals("baz", BaseModelE.with_validation({"foo":"bar"}).baz())
+        self.assertEquals("bar", BaseModelE.with_validation({"foo":"bar"}).bar())
 
 if __name__ == '__main__':
     import sys
