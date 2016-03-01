@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#based on http://hayd.github.io/2013/dotable-dictionaries/
 import sys
 
 
@@ -7,15 +6,16 @@ from jsonschema.validators import validator_for as jsonschema_validator_for
 from jsonschema import ValidationError
 from . import SchemaValidationError, InheritanceNotSupportedError
 
+
 def StringField():
-    return {"type":"string"}
+    return {"type": "string"}
 
 
 def NumberField():
-    return {"type":"number"}
+    return {"type": "number"}
 
 
-__allowed_options__ = {"additionalProperties":False, "required":None}
+__allowed_options__ = {"additionalProperties": False, "required": None}
 
 
 class BaseModel(dict):
@@ -72,14 +72,14 @@ class BaseModel(dict):
          :type: _lookup: dict
         :return:
         """
-        if not BaseModel in self.__class__.__bases__:
+        if BaseModel not in self.__class__.__bases__:
             raise InheritanceNotSupportedError()
         self.validate_schema()
         if value_dict is not None:
             if not _lookup:
                 _lookup = self.__schema__.get('properties', {})
             self.update(**dict(
-                (key,self.__parse_input(value, _lookup.get(key, None)))
+                (key, self.__parse_input(value, _lookup.get(key, None)))
                 for key, value in value_dict.iteritems()))
         print ""
 
@@ -91,7 +91,7 @@ class BaseModel(dict):
         try:
             self.__class__.__schema_validator__.validate(self)
         except ValidationError, e:
-            raise SchemaValidationError, e, sys.exc_info()[2]
+            raise SchemaValidationError(e), None, sys.exc_info()[2]
 
     @classmethod
     def with_validation(cls, value_dict):
@@ -111,17 +111,17 @@ class BaseModel(dict):
 
         :return:
         """
-        if not cls is BaseModel and not cls.__schema__:
+        if cls is not BaseModel and not cls.__schema__:
             # pop allowed options
             options = {key: value for key, value in (
                 (key, cls.__popattr__(key, default))
-                for key, default in __allowed_options__.items()) if value is not
-                       None}
+                for key, default in __allowed_options__.items())
+                if value is not None}
 
             # pop public kwargs
             kwargs = {key: cls.__parse_schema(cls.__popattr__(key))
-                    for key, value in cls.__dict__.items()
-                    if not callable(value) and not str(key).startswith("__")}
+                      for key, value in cls.__dict__.items()
+                      if not callable(value) and not str(key).startswith("__")}
 
             # create schema from kwargs and options
             cls.__schema__ = dict({
@@ -134,7 +134,7 @@ class BaseModel(dict):
             cls.__schema__ = cls(cls.__schema__)
             print ""
 
-        if not cls is BaseModel and not cls.__schema_validator__:
+        if cls is not BaseModel and not cls.__schema_validator__:
             # cache jsonschema validator in Model class
             validator_class = jsonschema_validator_for(cls.__schema__)
             validator_class.check_schema(cls.__schema__)
